@@ -8,6 +8,7 @@ def get_ic(ciphertext, d):
     groups = []
     for i in range(d):
         groups.append(ciphertext[i::d])
+    print(groups)
 
     for group in groups:
         # get frequency table of each letter
@@ -31,22 +32,21 @@ def decrypt(ciphertext, key):
     key_length = len(key)
 
     for i, char in enumerate(ciphertext):
-        if char.isalpha():  # Ignore non-alphabetic characters
-            key_letter = key[i % 4]  # Cycle through key
-            key_shift = ord(key_letter) - ord('A')  # Convert key letter to shift value
 
-            decrypted_letter = chr(((ord(char) - ord('A') - key_shift) % 26) + ord('A'))
-            decrypted_text.append(decrypted_letter)
-        else:
-            decrypted_text.append(char)  # Preserve spaces/punctuation
+        key_letter = key[i % 4]  # Cycle through key
+        key_shift = ord(key_letter) - ord('A')  # Convert key letter to shift value
+
+        decrypted_letter = chr(((ord(char) - ord('A') - key_shift) % 26) + ord('A'))
+        decrypted_text.append(decrypted_letter)
+
 
     return "".join(decrypted_text)
 
 
-ciphertext = "BEZRLEKVUPVKHQWZFPVZMHDJMSHNHCVKHQWZFPVZMHDJMSHRZPRWPTVUHXLKPLVKAPDXXZIWHZOZLSQVLDLKPLVKAPHGHNKFYMHCBPIZMHDJMSHVIZFYHQLEVCHUNWLKY"
+ciphertext = "YTILITTPREEEEFFTCEETJWMDJHQHEREEEFFTCEETJWMDJHQLWEAQMIEOEMUEMAEEXEMRUORQEOXTIHZPISUEMAEEXEQAECTZVBQWYERTJWMDJHQPFOOSEFUYSRQOKLUEV"
 key_lens = [4]
 
 for i in key_lens:
     print(f"IC length {i}: {get_ic(ciphertext, i)}")
 
-print(decrypt(ciphertext, "DLRG"))
+print(decrypt(ciphertext, "TLDR"))
