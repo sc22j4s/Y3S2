@@ -4,8 +4,7 @@ from django.db import models
 """TODO str dunder methods"""
 # Create your models here.
 class Professor(models.Model):
-    id = models.AutoField(primary_key=True)
-    code = models.CharField(max_length=4)
+    code = models.CharField(max_length=5, primary_key=True)
     name = models.CharField(max_length=100)
     rating = models.FloatField()
 
@@ -23,8 +22,7 @@ class User(models.Model):
     
 
 class Module(models.Model):
-    id = models.AutoField(primary_key=True) # code = id? 
-    code = models.CharField(max_length=4)
+    code = models.CharField(max_length=5, primary_key=True)
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -53,7 +51,7 @@ class Rating(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     professor_module = models.ForeignKey(ProfessorModule, on_delete=models.CASCADE)
-    rating = models.FloatField()
+    rating = models.FloatField() # Back-end validation for vote range
 
     """Cannot have duplicate entry"""
 
