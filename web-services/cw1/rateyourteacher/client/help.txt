@@ -1,0 +1,74 @@
+Command List for Professor Rating Client Application
+----------------------------------------------------
+
+1. register
+   - Registers a new user to the service.
+   - The program will prompt the user to enter:
+     - Username
+     - Email
+     - Password
+   - Example usage:
+     register
+
+2. login
+   - Logs in to the service.
+   - Syntax:
+     login url
+   - 'url' is the address of the hosted service (e.g., 'yourusername.pythonanywhere.com').
+   - The program will prompt the user to enter:
+     - Username
+     - Password
+   - Example usage:
+     login yourusername.pythonanywhere.com
+
+3. logout
+   - Logs out the currently logged-in user.
+   - Example usage:
+     logout
+
+4. list
+   - Displays a list of all module instances along with the professor(s) teaching them.
+   - Example output:
+     Code                Name                   Year  Semester    Taught by
+     CD1   Computing for Dummies    2017    1          JE1, Professor J. Excellent
+                                                        VS1, Professor V. Smart
+     CD1   Computing for Dummies    2018    2          JE1, Professor J. Excellent
+     PG1   Programming for the Gifted 2017   2         TT1, Professor T. Terrible
+   - Example usage:
+     list
+
+5. view
+   - Displays the overall rating of all professors.
+   - Example output:
+     The rating of Professor J. Excellent (JE1) is *****
+     The rating of Professor T. Terrible (TT1) is *
+     The rating of Professor V. Smart (VS1) is ** 
+   - Example usage:
+     view
+
+6. average
+   - Shows the average rating of a specific professor in a specific module.
+   - Syntax:
+     average professor_id module_code
+   - Parameters:
+     - professor_id: Unique ID of the professor (e.g., JE1)
+     - module_code: Code of the module (e.g., CD1)
+   - Example output:
+     The rating of Professor V. Smart (VS1) in module Computing for Dummies (CD1) is ***
+   - Example usage:
+     average VS1 CD1
+
+7. rate
+   - Allows the user to rate the teaching of a specific professor in a specific module instance.
+   - Syntax:
+     rate professor_id module_code year semester rating
+   - Parameters:
+     - professor_id: Unique ID of the professor (e.g., JE1)
+     - module_code: Code of the module (e.g., CD1)
+     - year: Year of the teaching instance (e.g., 2018)
+     - semester: Semester number (e.g., 2)
+     - rating: Numerical rating between 1-5
+   - Example usage:
+     rate JE1 CD1 2018 2 5
+
+----------------------------------------------------
