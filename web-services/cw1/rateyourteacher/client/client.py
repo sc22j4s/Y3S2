@@ -5,7 +5,10 @@ import os
 # URL = "sc22j4s@pythonanywhere.com"
 URL = "http://127.0.0.1:8000"
 
+"""
+404 default error??
 
+"""
 def help():
     """
     Gets help textfile (from adjacent directory) and prints it.
@@ -21,7 +24,7 @@ def help():
     return
 
 def register():
-    # request to send prompts?
+    # request to send prompts? 
 
     username = input("Enter username: ")
     email = input("Enter email: ")
@@ -35,28 +38,43 @@ def register():
         "password": password})
     # response
 
-    print(response.text)
 
-    if response.status_code == 200:
+    if response.status_code == 201:
         print("Successfully registered!")
     else:
+        print("Registration failed. Please try again.")
         print(response.text)
 
     return
 
-def login(args):
+def login(args): 
 
-
+    
+    
     if len(args) != 2:
         print("Usage: login <url>")
+        return
+    
+    url = args[1]
+    url = URL # remove after deploying
 
-    # url = args[1]
+    # check if URL exists
+    try:
+        response = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return
 
-    url = URL
 
-    # response = requests.get(url)
+    username = input("Enter username: ")
+    password = input("Enter password: ")
 
-    # sc22j4s.pythonanywhere.com
+    response = requests.post(
+        f"{URL}/register/", 
+        data={"username": username,
+        "password": password})
+
+    
 
     
     
@@ -80,8 +98,8 @@ def rate(args):
 
 
 def main():
-    print("Welcome to RateYourTeacher!\n")
-    print("Type 'help' for command list")
+    print("Welcome to RateYourTeacher!")
+    print("Type 'help' for command list, 'exit' to quit.")
 
     while True:
         inp = input(">>> ")

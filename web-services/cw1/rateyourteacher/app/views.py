@@ -1,7 +1,9 @@
-from django.shortcuts import render
+from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import never_cache
 
 from app.models import *
 
@@ -24,6 +26,7 @@ def test(request):
     return HttpResponse("FUCK YOU")
 
 @csrf_exempt
+@never_cache 
 def register(request):
     """
     TODO:
@@ -31,44 +34,62 @@ def register(request):
     """
     
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password') 
-        
-        message = []
-
-        if len(username) < 8 or len(username) > 20:
-            message.append("Bad username")
-        
-        if len(password) < 8 or len(password) > 20:
-            message.append("Bad password")
-    
         try:
-            email_info = validate_email(email)  # validate and get email info
-            email = email_info.normalized  # validates the address and gives you its normalized form
-            print(f'{email} is valid')  # print success message
-        except EmailNotValidError as e:  # catch invalid emails
-            message.append(f'{email} is not valid')  # print failure message
-            print(str(e))  # print the specific error message
+            
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            password = request.POST.get('password') 
+            
+            message = []
 
-        # If any error messages, halt and return issues
-        if len(message) > 0:
-            # TODO concatenate
-            return JsonResponse({'message': message})
-        
-        # Add to database
-        user = User(username=username, password=password, email=email)
-        user.save()
+            if len(username) < 8 or len(username) > 20:
+                message.append("Username must be between 8 and 20 characters")
+            
+            if len(password) < 8 or len(password) > 20:
+                message.append("Password must be between 8 and 20 characters")
 
-        return JsonResponse({'message': "success"})
+            # Email validation (from package)
+            try:
+                email_info = validate_email(email)  
+                email = email_info.normalized 
+            except EmailNotValidError as e:  
+                message.append(str(e))  # Get specific email error from library
+
+            # If any error messages, halt and return bad request signal
+            if len(message) > 0:
+                # TODO concatenate
+                return JsonResponse({'message': message}, status=400)
+            
+            # Add to database
+            user = User(username=username, password=password, email=email)
+            user.save()
+
+            # Resource created (User), so return 201
+            print("success")
+            return JsonResponse({'message': "success"}, status=201)
         
+        except Exception as e:
+            return JsonResponse({'message': str(e)}, status=400)
     
     else:
+        return JsonResponse({'message': "Incorrect request method"}, status=405)
 
-        return JsonResponse({'message': "Incorrect request method"})
-
+@csrf_exempt
+@never_cache
 def login(request):
-    pass
+
+    if request.method == "POST":
+        
+        try:
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+
+            user = User.objects.get(username=username, password=password)
+
+            if user is None:
+                return JsonResponse({'message': "User not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({'message': str(e)}, status=400)
 
 def logout(request):
     pass

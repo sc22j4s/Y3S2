@@ -6,8 +6,11 @@ email: sc22j4s@leeds.ac.uk
 
 ---
 
-Requirements:
+Requirements for client:
 
 requests
+
+Requirements for server:
+
 
 
