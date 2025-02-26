@@ -2,6 +2,7 @@ import requests
 import json
 import os
 
+
 # URL = "sc22j4s@pythonanywhere.com"
 URL = "http://127.0.0.1:8000"
 
@@ -38,17 +39,19 @@ def register():
             data={"username": username,
                 "email": email,
             "password": password})
-        # response
+
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
-
+    # response
     if response.status_code == 201:
         print("Successfully registered!")
         # login with details here?
     else:
-        print("Registration failed. Please try again.")
-        print(response.text)
+        errors = response.json().get('message')
+        print("Errors received from server:")
+        print(errors)
+
 
     return
 
@@ -137,7 +140,9 @@ def main():
             print("You are currently not logged in - type 'login <URL>' or 'register' to use the site.")
         else:
             print(f"Currently logged in as: {name}")
-        inp = input(">>> ")
+        
+        inp = input(">>> ").lower()
+        
         
         args = inp.split(" ")
     
@@ -151,7 +156,7 @@ def main():
             name = login(args)
         
         elif args[0] == "logout":
-            name = logout(name) # may not need
+            name = logout(name)
 
         elif args[0] == "list":
             list(args)
@@ -164,6 +169,7 @@ def main():
         
         elif args[0] == "exit":
             break
+
         else:
             print(f"Command {inp} not recognised. Type \"help\" for command list.")
 

@@ -22,7 +22,6 @@ urlpatterns = [
     #path("", views.index),  # Redirect to app's urls
     # path("app/", include("app.urls")),
     path("admin/", admin.site.urls),
-    path("hello/", views.test, name="Hello"),
     path("register/", views.register, name="register"),
     path("login_user/", views.login_user, name="login"),
     path("logout_user/", views.logout_user, name="logout"),
