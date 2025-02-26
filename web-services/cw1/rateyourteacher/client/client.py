@@ -31,16 +31,21 @@ def register():
     password = input("Enter password: ")
 
 
-    response = requests.post(
-        f"{URL}/register/", 
-        data={"username": username,
-               "email": email,
-        "password": password})
-    # response
+    try:
 
+        response = requests.post(
+            f"{URL}/register/", 
+            data={"username": username,
+                "email": email,
+            "password": password})
+        # response
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return
 
     if response.status_code == 201:
         print("Successfully registered!")
+        # login with details here?
     else:
         print("Registration failed. Please try again.")
         print(response.text)
@@ -49,8 +54,7 @@ def register():
 
 def login(args): 
 
-    
-    
+
     if len(args) != 2:
         print("Usage: login <url>")
         return
@@ -69,19 +73,44 @@ def login(args):
     username = input("Enter username: ")
     password = input("Enter password: ")
 
-    response = requests.post(
-        f"{URL}/register/", 
-        data={"username": username,
-        "password": password})
+    try:
+        response = requests.post(
+            f"{URL}/login_user/", 
+            data={"username": username,
+            "password": password})
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return
 
-    
+    if response.status_code == 200:
+        print("Successfully logged in!")
+        return username
+    else:
+        print("Login failed. Please try again.")
+        print(response.text)
 
-    
-    
-    pass
+    return
 
-def logout():
-    pass
+
+def logout(name):
+
+    try:
+        response = requests.post(
+            f"{URL}/logout_user/",
+            data={"username": name})
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return
+    
+    if response.status_code == 200:
+        print("Successfully logged out!")   
+        return None
+    else:
+        print("Logout failed. Please try again.")
+        print(response.text)
+        return name
+
+    return
 
 def list():
     pass
@@ -98,10 +127,16 @@ def rate(args):
 
 
 def main():
-    print("Welcome to RateYourTeacher!")
+    print("Welcome to RateYourTeacher!") 
     print("Type 'help' for command list, 'exit' to quit.")
+    name = None
+    """TODO: use sessions instead of name"""
 
     while True:
+        if name == None:
+            print("You are currently not logged in - type 'login <URL>' or 'register' to use the site.")
+        else:
+            print(f"Currently logged in as: {name}")
         inp = input(">>> ")
         
         args = inp.split(" ")
@@ -113,10 +148,10 @@ def main():
             register()
         
         elif args[0] == "login":
-            login(args)
+            name = login(args)
         
         elif args[0] == "logout":
-            logout() # may not need
+            name = logout(name) # may not need
 
         elif args[0] == "list":
             list(args)

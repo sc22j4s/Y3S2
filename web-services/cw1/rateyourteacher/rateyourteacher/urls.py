@@ -19,13 +19,13 @@ from django.urls import include, path
 from app import views
 
 urlpatterns = [
-    path("", views.index),  # Redirect to app's urls
+    #path("", views.index),  # Redirect to app's urls
     # path("app/", include("app.urls")),
     path("admin/", admin.site.urls),
     path("hello/", views.test, name="Hello"),
     path("register/", views.register, name="register"),
-    path("login/", views.login, name="login"),
-    path("logout/", views.logout, name="logout"),
+    path("login_user/", views.login_user, name="login"),
+    path("logout_user/", views.logout_user, name="logout"),
     path("list/", views.list, name="list"),
     path("average/", views.average, name="average"),
     path("rate/", views.rate, name="rate"),

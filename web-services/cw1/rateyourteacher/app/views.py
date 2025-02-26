@@ -7,18 +7,8 @@ from django.views.decorators.cache import never_cache
 
 from app.models import *
 
-
 from email_validator import validate_email, EmailNotValidError
-
-# Create your views here
-def index(request):
-    template = loader.get_template('index.html')
-
-    """
-    Sign in, 
-    """
-    print("hello")
-    return HttpResponse(template.render())
+ 
 
 def test(request):
     
@@ -42,6 +32,7 @@ def register(request):
             
             message = []
 
+            """
             if len(username) < 8 or len(username) > 20:
                 message.append("Username must be between 8 and 20 characters")
             
@@ -55,17 +46,26 @@ def register(request):
             except EmailNotValidError as e:  
                 message.append(str(e))  # Get specific email error from library
 
+
+            # Similar username / email check
+            if User.objects.filter(username=username).exists():
+                message.append("Username already exists")
+        
+            if User.objects.filter(email=email).exists():
+                message.append("Email already exists")
+
+            """
+         
             # If any error messages, halt and return bad request signal
             if len(message) > 0:
                 # TODO concatenate
                 return JsonResponse({'message': message}, status=400)
             
-            # Add to database
-            user = User(username=username, password=password, email=email)
+            # Add to database using Django's User model
+            user = User.objects.create_user(username=username, password=password, email=email)
             user.save()
 
             # Resource created (User), so return 201
-            print("success")
             return JsonResponse({'message': "success"}, status=201)
         
         except Exception as e:
@@ -76,23 +76,40 @@ def register(request):
 
 @csrf_exempt
 @never_cache
-def login(request):
+def login_user(request):
 
     if request.method == "POST":
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if not username or not password:
+            return JsonResponse({'message': "Missing username/password"}, status=400)
         
-        try:
-            username = request.POST.get('username')
-            password = request.POST.get('password')
 
-            user = User.objects.get(username=username, password=password)
 
-            if user is None:
-                return JsonResponse({'message': "User not found"}, status=404)
-        except Exception as e:
-            return JsonResponse({'message': str(e)}, status=400)
+        authenticated_user = authenticate(username=username, password=password)
 
-def logout(request):
-    pass
+        if authenticated_user is None:
+            return JsonResponse({'message': "Invalid credentials"}, status=401)
+
+        login(request, authenticated_user)
+        return JsonResponse({'message': "success"}, status=200)
+
+    else:
+        return JsonResponse({'message': "Incorrect request method"}, status=405)
+
+@csrf_exempt
+@never_cache
+def logout_user(request):
+    print("asdfa")
+    if request.method == "POST":   
+        logout(request)
+        return JsonResponse({'message': "success"}, status=200)
+    else:
+        return JsonResponse({'message': "Incorrect request method"}, status=405)
+
+    
 
 def list(request):
     pass

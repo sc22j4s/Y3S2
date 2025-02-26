@@ -5,7 +5,6 @@ from .models import Professor, Module, User, ModuleInstance, ProfessorModule, Ra
 # Register your models here.
 admin.site.register(Professor)
 admin.site.register(Module)
-admin.site.register(User)
 admin.site.register(Rating)
 admin.site.register(ModuleInstance)
 admin.site.register(ProfessorModule)
