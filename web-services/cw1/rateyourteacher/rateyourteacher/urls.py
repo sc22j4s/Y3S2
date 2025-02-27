@@ -26,6 +26,7 @@ urlpatterns = [
     path("login_user/", views.login_user, name="login"),
     path("logout_user/", views.logout_user, name="logout"),
     path("list/", views.list, name="list"),
+    path("view/", views.view, name="view"),
     path("average/", views.average, name="average"),
     path("rate/", views.rate, name="rate"),
 
