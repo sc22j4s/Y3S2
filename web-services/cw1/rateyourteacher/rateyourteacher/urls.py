@@ -29,5 +29,7 @@ urlpatterns = [
     path("view/", views.view, name="view"),
     path("average/", views.average, name="average"),
     path("rate/", views.rate, name="rate"),
+    path("test/", views.test, name="test"),
+    path("get_username/", views.get_username, name="get_username"),
 
 ]

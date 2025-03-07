@@ -1,15 +1,16 @@
-import requests
-import json
+import getpass
 import os
 from pandas import DataFrame
+import requests
 
-# URL = "sc22j4s@pythonanywhere.com"
-URL = "http://127.0.0.1:8000"
+URL = "sc22j4s.pythonanywhere.com"
 
-"""
-404 default error??
 
-"""
+# Persistent session - storing token in headers.
+session = requests.Session()
+
+    
+
 def help():
     """
     Gets help textfile (from adjacent directory) and prints it.
@@ -27,19 +28,30 @@ def help():
 def register():
     # request to send prompts? 
 
+    # Get user details
     username = input("Enter username: ")
     email = input("Enter email: ")
-    password = input("Enter password: ")
 
+    # Password match
+    while True:
+        password = getpass.getpass("Enter password: ")
+        confirm_password = getpass.getpass("Confirm password: ")
+        if password == confirm_password:
+            break
+        else:
+            print("Passwords do not match. Please try again.")
 
+    # Post request to server
     try:
-
-        response = requests.post(
+        response = session.post(
             f"{URL}/register/", 
             data={"username": username,
                 "email": email,
             "password": password})
-
+    # Generic error handling for when server is not running
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
@@ -47,12 +59,18 @@ def register():
     if response.status_code == 201:
         print("Successfully registered!")
         # login with details here?
-    else:
+    elif response.status_code == 400:
+        # Form parsing errors 
         errors = response.json().get('message')
         print("Errors received from server:")
         print(errors)
-
-
+    elif response.status_code == 409:
+        # Conflict - user/email already exists
+        print(f"{response.json().get('conflict')} already exists.")
+    else:
+        print("Registration failed. Please try again.")
+        print(response.text)
+        
     return
 
 def login(args): 
@@ -60,110 +78,146 @@ def login(args):
     if len(args) != 2:
         print("Usage: login <url>")
         return
-    
-    url = args[1]
-    url = URL # remove after deploying
 
+    url = args[1]
+    
     # check if URL exists
     try:
-        response = requests.get(url)
+        response = session.get(url)
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
 
     username = input("Enter username: ")
-    password = input("Enter password: ")
+    password = getpass.getpass("Enter password: ")
 
     try:
-        response = requests.post(
+        response = session.post(
             f"{URL}/login_user/", 
             data={"username": username,
             "password": password})
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
 
     if response.status_code == 200:
         print("Successfully logged in!")
-        return username
     elif response.status_code == 401:
         errors = response.json().get('message')
         print("Errors with sign-in:")
         print(errors)
+    elif response.status_code == 500:
+        print("Server error occurred. Please try again.")
     else:
         print("Login failed. Please try again.")
-        print(response.text)
+        print("Code: " + response.status_code)
         return None
 
 
     return
 
 
-def logout(name):
+def logout():
+    """
+    Removes authentication token from session header.
+    (If it exists already)
+    """
 
-    if name == None:
+    # Check if user is already logged in
+    if not session.cookies.get("sessionid"):
         print("You are already not logged in.")
         return
-    
-    try:
-        response = requests.post(
-            f"{URL}/logout_user/",
-            data={"username": name})
+
+    try: 
+        response = session.post(f"{URL}/logout_user/") 
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
-        return
     
     if response.status_code == 200:
-        print("Successfully logged out!")   
-        return None
+        # Remove local authentication state
+        session.cookies.clear()
+        print("Successfully logged out!")
+    elif response.status_code == 401:
+        print("Server error occurred. Please try again.")
+    elif response.status_code == 500:
+        print("Server error occurred. Please try again.")
     else:
-        print("Logout failed. Please try again.")
-        print(response.text)
-        return name
+        print("Logout failed.")
+        print(response.text) 
 
+    return
+        
 
 def list():
+    """
+    Gets a list of all module instances, with professors teaching them.
+    Each entry can be voted on by logged in users.
+    """
 
     try:
-        response = requests.get(f"{URL}/list/")
+        response = session.get(f"{URL}/list/")
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
     
     if response.status_code == 200:
-    
-        # check for empty list
-        if response.json() == []:
-            print("No module instances found.")
-            return
-        # to pandas dataframe
+        # OK - convert list to pandas dataframe
         df = DataFrame(response.json())
         print(df)
-
+    elif response.status_code == 204:
+        # No content
+        print("Module instance database is empty.")
+    elif response.status_code == 500:
+        print("Server error occurred. Please try again.")
     else:
-        print("Error retrieving list")
-        print(response.text)
+        # Generic error
+        print("Unknown error retrieving list.")
+        
+        
 
     return
 
 def view():
+    """
+    Gets a list of all professors with their average ratings,
+    across all module instances.
+    """
     
     try:
-        response = requests.get(f"{URL}/view/")
+        response = session.get(f"{URL}/view/")
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
     
     if response.status_code == 200:
-
-        # check for empty list
-        if response.json() == []:
-            print("No professors found.")
-            return
         for professor in response.json():
             print(professor)
+    elif response.status_code == 204:
+        # No content
+        print("Professor database is empty.")
+    elif response.status_code == 500:
+        print("Server error occurred. Please try again.")
+    else:
+        print("Error retrieving professors.")
 
-    pass
+    
+        
+
 
 def average(args):
 
@@ -175,95 +229,154 @@ def average(args):
     module_code = args[2].upper()
 
     try:
-        response = requests.get(
+        response = session.get(
             f"{URL}/average/",
             params={"professor_id": professor_id,
                 "module_code": module_code})
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
     
+    # Expected response 
     if response.status_code == 200:
         professor = response.json().get('professor')
         module = response.json().get('module')
         rating = response.json().get('average')
 
         print(f"Average rating of {professor} on module \"{module}\": {rating}")
+
+    elif response.status_code == 400:
+        # Bad request - print errors returned
+        print(response.json().get('message'))  
     elif response.status_code == 404:
-        print("No ratings found for this professor and module.")
+        # Module / professor does not exist in database
+        print(response.json().get('message'))
+    elif response.status_code == 500:
+        print("Server error occurred. Please try again.")
     else:
-        print("Error retrieving average rating.")
+        print("Unknown error retrieving average rating.")
         print(response.text)
     
     return
 
-def rate(name, args):
+def rate(args):
 
-    
     if len(args) != 6:
         print("Usage: rate <professor_id> <module_code> <year> <semester> <rating>")
-
-    if name == None:
-        print("You must be logged in to rate a professor.")
         return
-    
-    professor_id = args[1]
-    module_code = args[2]
+
+    # Alphanumeric inputs are capitalised for sanitisation
+    professor_id = args[1].upper()
+    module_code = args[2].upper()
     year = args[3]
     semester = args[4]
     rating = args[5]
     
+    # Post request to server
     try: 
-        response = requests.post(
+        response = session.post(
             f"{URL}/rate/", 
             data={"professor_id": professor_id,
                 "module_code": module_code,
                 "year": year,
                 "semester": semester,
-                "rating": rating})
+                "rating": rating,
+            }
+        )
+    except requests.exceptions.ConnectionError:
+        print("Could not connect to server - check URL and try again.")
+        return
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return
     
     if response.status_code == 200:
-        print("Rating successful!")
+        # Rating already exists, so update it
+        professor = response.json().get('professor')  
+        module = response.json().get('module')
+        print(f"[Updated] {professor} {rating} stars on module \"{module}\".")
+
+    elif response.status_code == 201:
+        # New rating created
+        professor = response.json().get('professor')  
+        module = response.json().get('module')
+        print(f"[Gave] {professor} {rating} stars on module \"{module}\".")
+
+    elif response.status_code == 400:
+        # Errors in user input
+        errors = response.json().get('message')
+        print("Errors received from server:")
+        print(errors)
+    elif response.status_code == 401:
+        # User not logged in
+        print("You must be logged in to rate professors.")
+    elif response.status_code == 404:
+        # Query data empty from database
+        print(response.json().get('message'))
+    elif response.status_code == 500:
+        print("Server error occurred. Please try again.")
     else:
-        print("Rating failed.")
+        print("Unkown error rating professor.")
         print(response.text)
-    pass
+
+    return
 
 
 def main():
-    print("Welcome to RateYourTeacher!") 
-    print("Type 'help' for command list, 'exit' to quit.")
-    name = None
-    """TODO: use sessions instead of name"""
 
-    while True:
-        """
-        if name == None:
-            print("You are currently not logged in - type 'login <URL>' or 'register' to use the site.")
-        else:
-            print(f"Currently logged in as: {name}")
-        """
+    try:
+        response = session.get(f"{URL}/test/")
+        # Welcome message from server
+        print(f"Connected to {URL}.")
+        if response.status_code == 200:
+            print(response.json().get('message')) 
+    except requests.exceptions.ConnectionError:
+        # Applcation is not usable - warn in advance
+        print("Could not connect to server - it may be offline or the default URL is invalid.")
         
-        
-        inp = input(">>> ").lower()
-        
-        
-        args = inp.split(" ")
+
+    print("Type 'help' for command list, 'exit' to quit.")
     
-        if args[0] == "help":
+    while True:
+
+        try:
+            response = session.get(f"{URL}/get_username/")
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            return
+        
+        if response.status_code == 200:
+            print(f"Currently logged in as: {response.json().get('username')}")    
+        elif response.status_code == 401:
+            print("You are currently not logged in - type register or login <URL> to rate professors.")
+        elif response.status_code == 500:
+            print("Server error occurred. Please try again.")
+        else:
+            print("Error retrieving username.")
+            print(response.text)
+            
+        print()
+    
+        inp = input(">>> ").lower()
+        args = inp.split()
+
+        if len(args) == 0:
+            continue
+    
+        elif args[0] == "help":
             help()
 
         elif args[0] == "register":
             register()
         
         elif args[0] == "login":
-            name = login(args)
+            login(args)
         
         elif args[0] == "logout":
-            name = logout(name)
+            logout()
 
         elif args[0] == "list":
             list()
@@ -275,7 +388,7 @@ def main():
             average(args)   
 
         elif args[0] == "rate":
-            rate(name, args)
+            rate(args)
         
         elif args[0] == "exit":
             break
@@ -284,7 +397,6 @@ def main():
             print(f"Command {inp} not recognised. Type \"help\" for command list.")
 
     print("Exiting RateYourTeacher...") 
-
 
 if __name__ == "__main__": 
     main()

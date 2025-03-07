@@ -33,24 +33,18 @@ def generate_code(name, table):
     elif len(capital_words) == 1:
         letters = capital_words[0][0]
 
-    else:
+    else: 
+        # No capitalised words (error input - should be edited in admin site)
         letters = "!!"
-
-
 
     code = letters.upper()
 
     # Query table for similar codes
     i = 1
-    print("Generating code... for", name)
     while table.filter(code=f"{code}{str(i)}").exists():
         i += 1
     code = f"{code}{str(i)}"
-    print(f"Generated code: {code}")
     return code
-
-    
-
 
 class Module(models.Model):
     code = models.CharField(max_length=5, primary_key=True, editable=False) # Can't be defined on admin site
@@ -85,8 +79,6 @@ class ModuleInstance(models.Model):
         return f"{self.module} ({self.year}, Semester {self.semester})"
     
 
-
-"""TODO str dunder methods"""
 # Create your models here.
 class Professor(models.Model):
     code = models.CharField(max_length=5, primary_key=True, editable=False)
@@ -139,38 +131,11 @@ class Rating(models.Model):
     professor_module = models.ForeignKey(ProfessorModule, on_delete=models.CASCADE)
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)]) # Back-end validation for vote range
 
-    # Cannot have duplicate entry
+    # Cannot have duplicate entry6
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'professor_module'], name='unique_rating')
         ]
-
-    def save(self, *args, **kwargs):
-        
-        """TODO: fix new duplicate entries not being saved"""
-
-        try:
-        # Look for an existing rating with the same user and professor_module.
-            existing = Rating.objects.get(user=self.user, professor_module=self.professor_module)
-            print("Found existing rating\n", existing)
-            # If this is a new instance (self.pk is None) or it's a different instance than the one found...
-            if self.pk is None or self.pk != existing.pk:
-                # Update the existing record instead.
-                existing.rating = self.rating
-                
-                super(Rating, existing).save(*args, **kwargs)
-                self.professor_module.professor.update_rating()
-                # Set our primary key to the existing record's pk.
-                self.pk = existing.pk
-                return
-        except Rating.DoesNotExist:
-            # No existing rating found, so fall through to creating a new one
-            pass
-        
-        
-        # For updates or new objects without a duplicate, call the parent's save()
-        super().save(*args, **kwargs)
-        self.professor_module.professor.update_rating()
 
     def __str__(self):
         return f"{self.user} gave {self.rating} stars to {self.professor_module}]"
