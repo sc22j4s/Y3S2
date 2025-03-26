@@ -91,8 +91,9 @@ class Professor(models.Model):
     def save(self, *args, **kwargs):
         if not self.code:
             self.code = generate_code(self.name, self.__class__.objects.all())
-            
-        self.name = f"Prof. {self.name}"
+
+        if not self.name.startswith("Prof. "):
+            self.name = "Prof. " + self.name
 
         super().save(*args, **kwargs)
 
@@ -137,6 +138,11 @@ class Rating(models.Model):
             models.UniqueConstraint(fields=['user', 'professor_module'], name='unique_rating')
         ]
 
+    # Update professor rating after saving
+    def save(self, *args, **kwargs):   
+        super().save(*args, **kwargs)
+        self.professor_module.professor.update_rating()
+    
     def __str__(self):
         return f"{self.user} gave {self.rating} stars to {self.professor_module}]"
 

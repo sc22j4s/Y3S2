@@ -245,13 +245,15 @@ def view(request):
                                 status=500)
     
         data = []
-        if len(data) == 0:
-            return JsonResponse({'message': "Professor data is empty."}, 
-                                status=204)
+        
 
         for professor in professors:
             # Data formatting to two decimal places
             data.append(f"The rating for {professor.name} is {professor.rating:.2f}")
+
+        if len(data) == 0:
+            return JsonResponse({'message': "Professor data is empty."}, 
+                                status=204)
 
         return JsonResponse(data, status=200, safe=False)
 
@@ -427,14 +429,3 @@ def rate(request):
                  'module': str(module_name)}, 
             status=201)
             
-        
-
-
-
-
-       
-        
-
-
-
-

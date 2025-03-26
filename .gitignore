@@ -8,3 +8,6 @@ env/
 *.pyc
 *.pyc
 *.pyc
+/web-services/cw1/rateyourteacher/app/__pycache__
+/web-services/cw1/rateyourteacher/app/migrations
+/web-services/cw1/rateyourteacher/rateyourteacher/__pycache__

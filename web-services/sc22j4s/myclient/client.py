@@ -3,13 +3,10 @@ import os
 from pandas import DataFrame
 import requests
 
-URL = "sc22j4s.pythonanywhere.com"
-
+URL = "https://sc22j4s.pythonanywhere.com"
 
 # Persistent session - storing token in headers.
 session = requests.Session()
-
-    
 
 def help():
     """
@@ -79,9 +76,15 @@ def login(args):
         print("Usage: login <url>")
         return
 
+    # Per specification, URL shouldn't need "https://"
     url = args[1]
-    
-    # check if URL exists
+
+    # Corrects URL if not already
+    if not url.startswith('https://'):
+        url = f"https://{url}"
+
+        
+    # Check if URL exists
     try:
         response = session.get(url)
     except requests.exceptions.ConnectionError:
@@ -214,9 +217,6 @@ def view():
         print("Server error occurred. Please try again.")
     else:
         print("Error retrieving professors.")
-
-    
-        
 
 
 def average(args):

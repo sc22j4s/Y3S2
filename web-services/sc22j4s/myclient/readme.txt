@@ -9,6 +9,12 @@ email: sc22j4s@leeds.ac.uk
 
 ---
 
+Requirements:
 
+requests
+pandas
+
+---
+ 
 
 
