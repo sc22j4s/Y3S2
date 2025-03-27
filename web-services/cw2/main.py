@@ -4,6 +4,7 @@ import json
 import time
 import string
 
+
 import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
@@ -11,14 +12,15 @@ nltk.download('stopwords')
 
 
 
+
+
 BASE_URL = "https://quotes.toscrape.com/" # Takes to page 1
 
-stopwords = [
-    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",]
 
-
-def scrape_page(url, index):
-    print(f"Scraping {url}")
+def scrape_page(url):
+    """
+    Returns parsed list of words from a webpage.
+    """
 
     index = {}
 
@@ -36,11 +38,16 @@ def scrape_page(url, index):
 
      # Get visible text
     text = soup.get_text(separator=' ').lower()
-
     clean_text = text.translate(str.maketrans("", "", string.punctuation))
+    words = clean_text.split()
 
-    print(clean_text)
-    return
+    # Removing stopwords 
+    for word in words:
+        if word in stopwords.words('english'):
+            words.remove(word)
+    
+    # Add words to inverted index
+    return words
 
 
 
@@ -56,6 +63,7 @@ def build():
     authors = []
     url = BASE_URL # Goes to page 1
     filename = "index.json" # File to save index to
+    page_list = []
 
     while True:
             
@@ -82,12 +90,11 @@ def build():
             if name not in authors:
                 authors.append(name)
                 url = f"{BASE_URL}{link['href']}"
-                scrape_page(url, index)
+                page_list.append(scrape_page(url))
         
 
         # Parse each page's content
-
-        scrape_page(url, index)
+        page_list.append(scrape_page(url, index))
 
 
         # Add words to inverted index
@@ -102,11 +109,13 @@ def build():
             break
         
    
+    # Combine tokens into list of unique terms
+    terms = list(set([term for page in page_list for term in page]))
 
+
+    for term in terms:
+        documents = []
    
-    
-  
-        
     pass
 
 def load():
