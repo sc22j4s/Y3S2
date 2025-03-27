@@ -2,15 +2,47 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import time
+import string
+
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+
 
 
 
 BASE_URL = "https://quotes.toscrape.com/" # Takes to page 1
 
+stopwords = [
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",]
+
 
 def scrape_page(url, index):
+    print(f"Scraping {url}")
 
-    pass
+    index = {}
+
+    try:
+        document = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return
+    
+    soup = BeautifulSoup(document.content, "html.parser")
+
+    # Remove script and style elements
+    for tag in soup(['script', 'style']):
+        tag.extract()
+
+     # Get visible text
+    text = soup.get_text(separator=' ').lower()
+
+    clean_text = text.translate(str.maketrans("", "", string.punctuation))
+
+    print(clean_text)
+    return
+
+
 
 
 
@@ -22,8 +54,8 @@ def build():
 
     index = {}
     authors = []
-    url = BASE_URL # Takes to page 1
-    filename = "index.json"
+    url = BASE_URL # Goes to page 1
+    filename = "index.json" # File to save index to
 
     while True:
             
@@ -40,6 +72,8 @@ def build():
 
         soup = BeautifulSoup(document.content, "html.parser")
 
+        
+        # Get all author links on page 
         author_links = soup.select('a[href^="/author/"]')
         
         for link in author_links:
@@ -47,12 +81,13 @@ def build():
             # Avoid duplicate author page scraping
             if name not in authors:
                 authors.append(name)
-                url = url = f"{BASE_URL}{next.a['href']}"
+                url = f"{BASE_URL}{link['href']}"
                 scrape_page(url, index)
         
-        print(authors)
 
         # Parse each page's content
+
+        scrape_page(url, index)
 
 
         # Add words to inverted index
@@ -90,7 +125,7 @@ def load():
 def print_index(args):
     
     if len(args) < 2:
-        print("Usage: print <word>")
+        print("Usage: find <word1> <word2> ... <wordN>")
         return
     pass
 
